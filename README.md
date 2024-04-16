@@ -37,7 +37,7 @@ func TestName(t *testing.T) {
 		}
 	
 	// invoke the tested function with the new event and log it's output 
-	resp, err := tc.Invoke(&testEvent)
+	resp, err := tc.Invoke(&testEvent, false)
 	tc.Logger.InfoWith("Run complete", "resp", resp, "err", err)
 }
 ```
@@ -69,7 +69,7 @@ func main() {
 	}
 	
 	// invoke the tested function with the new event and log it's output 
-	resp, err := tc.Invoke(&testEvent)
+	resp, err := tc.Invoke(&testEvent, false)
 	tc.Logger.InfoWith("Run complete", "resp", resp, "err", err)
 }
 ```
