@@ -18,6 +18,7 @@ package nutest
 
 import (
 	"testing"
+
 	"github.com/nuclio/nuclio-sdk-go"
 )
 
@@ -29,20 +30,18 @@ func MyHandler(context *nuclio.Context, event nuclio.Event) (interface{}, error)
 	return "test me\n" + string(event.GetBody()), nil
 }
 
-
 func TestNutest(t *testing.T) {
-	data := DataBind{Name:"db0", Url:"<v3io address>", Container:"x"}
-	tc, err := NewTestContext(MyHandler, true, &data )
+	data := DataBind{Name: "db0", Url: "<v3io address>", Container: "x"}
+	tc, err := NewTestContext(MyHandler, true, &data)
 	if err != nil {
 		t.Fail()
 	}
 
 	testEvent := TestEvent{
-		Path: "/some/path",
-		Body: []byte("1234"),
-		Headers:map[string]interface{}{"first": "string", "sec": "1"},
-		}
-	resp, err := tc.Invoke(&testEvent)
+		Path:    "/some/path",
+		Body:    []byte("1234"),
+		Headers: map[string]interface{}{"first": "string", "sec": "1"},
+	}
+	resp, err := tc.Invoke(&testEvent, false)
 	tc.Logger.InfoWith("Run complete", "resp", resp, "err", err)
 }
-

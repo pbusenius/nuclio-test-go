@@ -18,16 +18,17 @@ package nutest
 
 import (
 	"os"
-	"github.com/nuclio/zap"
-	"github.com/nuclio/nuclio-sdk-go"
-	"github.com/v3io/v3io-go-http"
-	"github.com/pkg/errors"
+
 	"github.com/nuclio/logger"
+	"github.com/nuclio/nuclio-sdk-go"
+	nucliozap "github.com/nuclio/zap"
+	"github.com/pkg/errors"
+	"github.com/v3io/v3io-go-http"
 )
 
-func NewTestContext(function func(context *nuclio.Context, event nuclio.Event)(interface {}, error),
-	   verbose bool, data  *DataBind) (*TestContext, error) {
-	newTest := TestContext{Data:data}
+func NewTestContext(function func(context *nuclio.Context, event nuclio.Event) (interface{}, error),
+	verbose bool, data *DataBind) (*TestContext, error) {
+	newTest := TestContext{Data: data}
 	if verbose {
 		newTest.LogLevel = nucliozap.DebugLevel
 	} else {
@@ -55,33 +56,37 @@ func NewTestContext(function func(context *nuclio.Context, event nuclio.Event)(i
 		db[data.Name] = container
 	}
 
-	newTest.context = nuclio.Context{Logger:logger, DataBinding:db, Platform: &nuclio.Platform{}}
+	newTest.context = nuclio.Context{Logger: logger, DataBinding: db, Platform: &nuclio.Platform{}}
 	newTest.function = function
-
 
 	return &newTest, nil
 }
 
 type TestContext struct {
-	LogLevel  nucliozap.Level
-	Logger    logger.Logger
-	Data      *DataBind
-	context   nuclio.Context
-	function  func(context *nuclio.Context, event nuclio.Event)(interface {}, error)
+	LogLevel nucliozap.Level
+	Logger   logger.Logger
+	Data     *DataBind
+	context  nuclio.Context
+	function func(context *nuclio.Context, event nuclio.Event) (interface{}, error)
 }
 
 func (tc *TestContext) InitContext(function func(context *nuclio.Context) error) error {
 	return function(&tc.context)
 }
 
-func (tc *TestContext) Invoke(event nuclio.Event) (interface{}, error) {
+func (tc *TestContext) Invoke(event nuclio.Event, loggingIsEnabled bool) (interface{}, error) {
 
 	body, err := tc.function(&tc.context, event)
 	if err != nil {
-		tc.Logger.ErrorWith("Function execution failed", "err", err)
+		if loggingIsEnabled {
+			tc.Logger.ErrorWith("Function execution failed", "err", err)
+		}
 		return body, err
 	}
-	tc.Logger.InfoWith("Function completed","output",body)
+
+	if loggingIsEnabled {
+		tc.Logger.InfoWith("Function completed", "output", body)
+	}
 
 	return body, err
 }
@@ -92,7 +97,7 @@ func (tc *TestContext) GetContext() nuclio.Context {
 
 func createContainer(logger logger.Logger, db *DataBind) (*v3io.Container, error) {
 	// create context
-	context, err := v3io.NewContext(logger, db.Url , 8)
+	context, err := v3io.NewContext(logger, db.Url, 8)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create client")
 	}
@@ -113,9 +118,9 @@ func createContainer(logger logger.Logger, db *DataBind) (*v3io.Container, error
 }
 
 type DataBind struct {
-	Name        string
-	Url         string
-	Container   string
-	User        string
-	Password    string
+	Name      string
+	Url       string
+	Container string
+	User      string
+	Password  string
 }
